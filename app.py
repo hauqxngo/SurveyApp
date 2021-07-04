@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, flash
+from flask import Flask, request, render_template, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
 from surveys import satisfaction_survey as survey
 
@@ -16,9 +16,17 @@ def index():
     
     return render_template('index.html', survey=survey)
 
-@app.route('/questions/<int:qnum>', methods=['GET', 'POST'])
+@app.route('/begin', methods=['POST'])
+def start_survey():
+    """Clear the session of responses."""
+    session['responses'] = []
+
+    return redirect('/questions/0')
+
+@app.route('/questions/<int:qnum>')
 def show_question(qnum):
     """Show current question."""
+    responses = session.get('responses')
 
     # if (responses is None):
     #     return redirect('/')
@@ -41,7 +49,9 @@ def handle_question():
     choice = request.form['answer']
 
     # append the answer to responses list
+    responses = session['responses']
     responses.append(choice)
+    session['responses'] = responses
 
     if (len(responses) == len(survey.questions)):
         return redirect('/complete')
